@@ -6,7 +6,7 @@ import (
 )
 
 func RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/health", healthCheckHandler)
+	mux.HandleFunc("GET /health", healthCheckHandler)
 }
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
