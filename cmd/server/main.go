@@ -6,10 +6,11 @@ import (
 	"net/http"
 
 	"github.com/hogiabao7725/go-auth-playground/internal/config"
+	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/health"
 )
 
 func main() {
-	// Load configuration
+	// load configuration
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("failed to load configuration: %v", err)
@@ -17,6 +18,9 @@ func main() {
 
 	// mux
 	mux := http.NewServeMux()
+
+	// register routes
+	health.RegisterRoutes(mux)
 
 	// server
 	server := &http.Server{
