@@ -10,8 +10,9 @@ import (
 
 type Options struct {
 	Level  string
-	Format string // "json" or "text"
+	Format string // "text" or "json"
 	Pretty bool
+	Env    string // "development" or "production"
 	Writer io.Writer
 }
 
@@ -21,22 +22,28 @@ func New(opts Options) *slog.Logger {
 		w = os.Stderr
 	}
 
+	level := parseLevel(opts.Level)
+
 	var handler slog.Handler
 	handlerOptions := &slog.HandlerOptions{
-		Level: parseLevel(opts.Level),
+		Level: level,
 	}
 
-	switch opts.Format {
-	case "json":
+	if opts.Env == "production" {
 		handler = slog.NewJSONHandler(w, handlerOptions)
-	default: // text
-		if opts.Pretty {
-			handler = tint.NewHandler(w, &tint.Options{
-				Level:   parseLevel(opts.Level),
-				NoColor: false,
-			})
-		} else {
-			handler = slog.NewTextHandler(w, handlerOptions)
+	} else { // development
+		switch opts.Format {
+		case "json":
+			handler = slog.NewJSONHandler(w, handlerOptions)
+		default:
+			if opts.Pretty {
+				handler = tint.NewHandler(w, &tint.Options{
+					Level:  level,
+					NoColor: false,
+				})
+			} else {
+				handler = slog.NewTextHandler(w, handlerOptions)
+			}
 		}
 	}
 
