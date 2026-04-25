@@ -19,16 +19,22 @@ func (lm *LoggerMiddleware) Handler(next http.Handler) http.Handler {
 		start := time.Now()
 
 		// Wrap the ResponseWriter to capture the status code
-		sr := &statusRecorder{ResponseWriter: w, status: http.StatusOK}
+		rec := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
 
-		next.ServeHTTP(sr, r)
+		next.ServeHTTP(rec, r)
 
 		duration := time.Since(start)
 
-		lm.logger.Info("request completed",
+		level := levelFromStatusCode(rec.statusCode)
+
+		lm.logger.LogAttrs(
+			r.Context(),
+			level,
+			"request completed",
 			slog.String("method", r.Method),
 			slog.String("path", r.URL.Path),
-			slog.Int("status", sr.status),
+			slog.String("query", r.URL.RawQuery),
+			slog.Int("status", rec.statusCode),
 			slog.Duration("duration", duration),
 			slog.String("remote_addr", r.RemoteAddr),
 			slog.String("user_agent", r.UserAgent()),
@@ -36,14 +42,26 @@ func (lm *LoggerMiddleware) Handler(next http.Handler) http.Handler {
 	})
 }
 
+// levelFromStatusCode maps HTTP status codes to slog levels for logging.
+func levelFromStatusCode(status int) slog.Level {
+	switch {
+	case status >= 500:
+		return slog.LevelError
+	case status >= 400:
+		return slog.LevelWarn
+	default:
+		return slog.LevelInfo
+	}
+}
+
 // statusRecorder wraps http.ResponseWriter to capture the HTTP response status code.
 type statusRecorder struct {
 	http.ResponseWriter
-	status int
+	statusCode int
 }
 
 // WriteHeader captures the status code and delegates to the underlying ResponseWriter.
 func (sr *statusRecorder) WriteHeader(code int) {
-	sr.status = code
+	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
 }
