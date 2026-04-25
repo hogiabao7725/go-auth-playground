@@ -9,7 +9,7 @@ import (
 )
 
 type Options struct {
-	Level  slog.Level
+	Level  string
 	Format string // "json" or "text"
 	Pretty bool
 	Writer io.Writer
@@ -23,7 +23,7 @@ func New(opts Options) *slog.Logger {
 
 	var handler slog.Handler
 	handlerOptions := &slog.HandlerOptions{
-		Level: opts.Level,
+		Level: parseLevel(opts.Level),
 	}
 
 	switch opts.Format {
@@ -32,7 +32,7 @@ func New(opts Options) *slog.Logger {
 	default: // text
 		if opts.Pretty {
 			handler = tint.NewHandler(w, &tint.Options{
-				Level:   opts.Level,
+				Level:   parseLevel(opts.Level),
 				NoColor: false,
 			})
 		} else {
@@ -43,9 +43,9 @@ func New(opts Options) *slog.Logger {
 	return slog.New(handler)
 }
 
-func ParseLevel(level string) slog.Level {
+func parseLevel(level string) slog.Level {
 	switch level {
-	case "debug":	
+	case "debug":
 		return slog.LevelDebug
 	case "info":
 		return slog.LevelInfo
