@@ -6,6 +6,7 @@ require (
 	github.com/caarlos0/env/v11 v11.4.0
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/joho/godotenv v1.5.1
+	github.com/lmittmann/tint v1.1.3
 )
 
 require (
