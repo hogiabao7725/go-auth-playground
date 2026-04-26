@@ -1,17 +1,21 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/hogiabao7725/go-auth-playground/internal/config"
+	"github.com/hogiabao7725/go-auth-playground/internal/database"
 	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/health"
 	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/middleware"
 	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/logger"
 )
 
 func main() {
+	ctx := context.Background()
+
 	// load configuration
 	cfg, err := config.Load()
 	if err != nil {
@@ -27,6 +31,23 @@ func main() {
 		Env:    cfg.Server.Env,
 		Writer: os.Stderr,
 	})
+
+	// database
+	dbpool, err := database.NewPostgresPool(ctx, database.PoolConfig{
+		DSN:            cfg.DB.DSN(),
+		MaxConns:       cfg.DB.MaxConns,
+		MinConns:       cfg.DB.MinConns,
+		ConnLifetime:   cfg.DB.ConnLifetime,
+		ConnIdleTime:   cfg.DB.ConnIdleTime,
+		ConnectTimeout: cfg.DB.ConnectTimeout,
+	})
+	if err != nil {
+		appLogger.Error("failed to connect to database", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	defer dbpool.Close()
+
+	appLogger.Info("connected to database")
 
 	// mux
 	mux := http.NewServeMux()
