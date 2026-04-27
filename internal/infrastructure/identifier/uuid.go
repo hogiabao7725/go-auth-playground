@@ -9,6 +9,10 @@ var _ user.IdentifierGenerator = (*UUID)(nil)
 
 type UUID struct{}
 
+func NewUUID() *UUID {
+	return &UUID{}
+}
+
 func (UUID) Generate() string {
 	return uuid.New().String()
 }
