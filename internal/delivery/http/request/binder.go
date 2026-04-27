@@ -8,16 +8,29 @@ import (
 	"strings"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/response"
+)
+
+var (
+	ErrInvalidJSON    = errors.New("invalid JSON")
+	ErrInvalidRequest = errors.New("invalid request")
 )
 
 var v *validator.Validate
+
+type ValidationError struct {
+	Fields map[string]string
+}
+
+func (e *ValidationError) Error() string {
+	return "validation error"
+}
 
 func init() {
 	v = validator.New()
 
 	// Register custom tag name function to use JSON tags in error messages
 	v.RegisterTagNameFunc(func(field reflect.StructField) string {
+		// eg: `json:"email,omitempty"` -> "email,omitempty" → ["email", "omitempty"]
 		name := strings.SplitN(field.Tag.Get("json"), ",", 2)[0]
 		if name == "-" {
 			return ""
@@ -31,34 +44,26 @@ func init() {
 	})
 }
 
-func BindJSON(w http.ResponseWriter, r *http.Request, req any) bool {
+func BindJSON(w http.ResponseWriter, r *http.Request, req any) error {
 	// Decode JSON
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		response.BadRequest(w, "invalid JSON", nil)
-		return false
+		return ErrInvalidJSON
 	}
 
 	// Validate struct
 	if err := v.Struct(req); err != nil {
-		handleValidationError(w, err)
-		return false
-	}
-
-	return true
-}
-
-func handleValidationError(w http.ResponseWriter, err error) {
-	var ve validator.ValidationErrors
-	if errors.As(err, &ve) {
-		fields := make(map[string]string, len(ve))
-		for _, fe := range ve {
-			fields[fe.Field()] = validationMessage(fe)
+		var ve validator.ValidationErrors
+		if errors.As(err, &ve) {
+			fields := make(map[string]string, len(ve))
+			for _, fe := range ve {
+				fields[fe.Field()] = validationMessage(fe)
+			}
+			return &ValidationError{Fields: fields}
 		}
-
-		response.ValidationError(w, fields)
-		return
+		return ErrInvalidRequest
 	}
-	response.BadRequest(w, "invalid request", nil)
+
+	return nil
 }
 
 func validationMessage(fe validator.FieldError) string {
