@@ -8,9 +8,15 @@ import (
 
 	"github.com/hogiabao7725/go-auth-playground/internal/config"
 	"github.com/hogiabao7725/go-auth-playground/internal/database"
+	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/auth"
 	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/health"
 	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/middleware"
+	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/crypt"
+	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/identifier"
 	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/logger"
+	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/persistence"
+	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/persistence/sqlc"
+	registerUC "github.com/hogiabao7725/go-auth-playground/internal/usecase/auth/register"
 )
 
 func main() {
@@ -52,8 +58,25 @@ func main() {
 	// mux
 	mux := http.NewServeMux()
 
+	// infrastructure
+	bcrypt := crypt.NewBcrypt()
+	idGen := identifier.NewUUID()
+
+	// repositories
+	queries := sqlc.New(dbpool)
+	userRepo := persistence.NewUserRepository(queries)
+
+	// use case
+	registerUC := registerUC.NewInteractor(bcrypt, idGen, userRepo)
+
+	// handlers
+	registerHandler := auth.NewRegisterHandler(registerUC)
+
 	// register routes
+	authRoutes := auth.NewAuthRoutes(registerHandler)
+
 	health.RegisterRoutes(mux)
+	authRoutes.RegisterRoutes(mux)
 
 	// logger register route
 	appLogger.Info("registered routes")
