@@ -44,9 +44,14 @@ func init() {
 	})
 }
 
-func BindJSON(w http.ResponseWriter, r *http.Request, req any) error {
+func BindJSON(r *http.Request, req any) error {
+	defer r.Body.Close()
+
 	// Decode JSON
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields() // Disallow unknown fields to prevent silent errors
+
+	if err := dec.Decode(req); err != nil {
 		return ErrInvalidJSON
 	}
 
