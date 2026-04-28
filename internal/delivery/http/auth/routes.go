@@ -3,13 +3,15 @@ package auth
 import "net/http"
 
 type AuthRoutes struct {
-	registerUC *RegisterHandler
+	registerHL *RegisterHandler
+	loginHL    *LoginHandler
 }
 
-func NewAuthRoutes(registerUC *RegisterHandler) *AuthRoutes {
-	return &AuthRoutes{registerUC: registerUC}
+func NewAuthRoutes(registerHL *RegisterHandler, loginHL *LoginHandler) *AuthRoutes {
+	return &AuthRoutes{registerHL: registerHL, loginHL: loginHL}
 }
 
 func (ar *AuthRoutes) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /auth/register", ar.registerUC.HandleRegister)
+	mux.HandleFunc("POST /auth/register", ar.registerHL.HandleRegister)
+	mux.HandleFunc("POST /auth/login", ar.loginHL.HandleLogin)
 }

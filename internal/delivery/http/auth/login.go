@@ -6,19 +6,19 @@ import (
 
 	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/request"
 	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/response"
-	registerUC "github.com/hogiabao7725/go-auth-playground/internal/usecase/auth/register"
+	"github.com/hogiabao7725/go-auth-playground/internal/usecase/auth/login"
 )
 
-type RegisterHandler struct {
-	uc registerUC.RegisterUseCase
+type LoginHandler struct {
+	uc login.LoginUseCase
 }
 
-func NewRegisterHandler(uc registerUC.RegisterUseCase) *RegisterHandler {
-	return &RegisterHandler{uc: uc}
+func NewLoginHandler(uc login.LoginUseCase) *LoginHandler {
+	return &LoginHandler{uc: uc}
 }
 
-func (h *RegisterHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
-	var req RegisterRequest
+func (h *LoginHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
+	var req LoginRequest
 
 	// Bind and validate request
 	if err := request.BindJSON(r, &req); err != nil {
@@ -32,8 +32,7 @@ func (h *RegisterHandler) HandleRegister(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Execute use case
-	result, err := h.uc.Execute(r.Context(), registerUC.Command{
-		Name:     req.Name,
+	result, err := h.uc.Execute(r.Context(), login.Command{
 		Email:    req.Email,
 		Password: req.Password,
 	})
@@ -43,12 +42,13 @@ func (h *RegisterHandler) HandleRegister(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	res := RegisterResponse{
-		ID:        result.ID(),
-		Name:      result.Name().String(),
-		Email:     result.Email().String(),
-		Role:      result.Role().String(),
-		CreatedAt: result.CreatedAt(),
+	res := LoginResponse{
+		User: UserInfo{
+			ID:    result.ID(),
+			Name:  result.Name().String(),
+			Email: result.Email().String(),
+			Role:  result.Role().String(),
+		},
 	}
-	response.Success(w, http.StatusCreated, "user registered successfully", res)
+	response.Success(w, http.StatusOK, "login successful", res)
 }

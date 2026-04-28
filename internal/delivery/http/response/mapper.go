@@ -21,6 +21,12 @@ func MapDomainErrorToHTTP(err error) (int, string) {
 	case errors.Is(err, user.ErrEmailAlreadyExists):
 		return http.StatusConflict, err.Error()
 
+	case errors.Is(err, user.ErrUserNotFound):
+		return http.StatusNotFound, err.Error()
+
+	case errors.Is(err, user.ErrInvalidCredentials):
+		return http.StatusUnauthorized, err.Error()
+
 	default:
 		return http.StatusInternalServerError, "internal server error"
 	}

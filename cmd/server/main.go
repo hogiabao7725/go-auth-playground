@@ -16,6 +16,7 @@ import (
 	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/logger"
 	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/persistence"
 	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/persistence/sqlc"
+	"github.com/hogiabao7725/go-auth-playground/internal/usecase/auth/login"
 	registerUC "github.com/hogiabao7725/go-auth-playground/internal/usecase/auth/register"
 )
 
@@ -68,12 +69,14 @@ func main() {
 
 	// use case
 	registerUC := registerUC.NewInteractor(bcrypt, idGen, userRepo)
+	loginUC := login.NewInteractor(bcrypt, userRepo)
 
 	// handlers
 	registerHandler := auth.NewRegisterHandler(registerUC)
+	loginHandler := auth.NewLoginHandler(loginUC)
 
 	// register routes
-	authRoutes := auth.NewAuthRoutes(registerHandler)
+	authRoutes := auth.NewAuthRoutes(registerHandler, loginHandler)
 
 	health.RegisterRoutes(mux)
 	authRoutes.RegisterRoutes(mux)
