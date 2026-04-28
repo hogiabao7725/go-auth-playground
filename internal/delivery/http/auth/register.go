@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/request"
@@ -16,12 +17,12 @@ func NewRegisterHandler(uc *registerUC.Interactor) *RegisterHandler {
 	return &RegisterHandler{uc: uc}
 }
 
-func (h *RegisterHandler) RegisterHandle(w http.ResponseWriter, r *http.Request) {
+func (h *RegisterHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 
 	// Bind and validate request
-	if err := request.BindJSON(w, r, &req); err != nil {
-		if valErr, ok := err.(*request.ValidationError); ok {
+	if err := request.BindJSON(r, &req); err != nil {
+		if valErr, ok := errors.AsType[*request.ValidationError](err); ok {
 			response.Error(w, http.StatusUnprocessableEntity, "validation error", valErr.Fields)
 			return
 		}
@@ -41,5 +42,13 @@ func (h *RegisterHandler) RegisterHandle(w http.ResponseWriter, r *http.Request)
 		response.Error(w, statusCode, msg, nil)
 		return
 	}
-	response.Success(w, http.StatusCreated, "user registered successfully", result)
+
+	res := RegisterResponse{
+		ID:        result.ID(),
+		Name:      result.Name().String(),
+		Email:     result.Email().String(),
+		Role:      result.Role().String(),
+		CreatedAt: result.CreatedAt(),
+	}
+	response.Success(w, http.StatusCreated, "user registered successfully", res)
 }

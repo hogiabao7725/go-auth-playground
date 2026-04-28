@@ -11,5 +11,5 @@ func NewAuthRoutes(registerUC *RegisterHandler) *AuthRoutes {
 }
 
 func (ar *AuthRoutes) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /auth/register", ar.registerUC.RegisterHandle)
+	mux.HandleFunc("POST /auth/register", ar.registerUC.HandleRegister)
 }
