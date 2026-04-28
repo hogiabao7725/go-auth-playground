@@ -8,3 +8,6 @@ type PasswordHasher interface {
 type IdentifierGenerator interface {
 	Generate() string
 }
+
+type TokenGenerator interface {
+}

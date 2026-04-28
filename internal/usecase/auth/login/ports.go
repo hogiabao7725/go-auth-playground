@@ -7,5 +7,5 @@ import (
 )
 
 type LoginUseCase interface {
-	Execute(ctx context.Context, cmd Command) (*userDomain.User, error)
+	Login(ctx context.Context, cmd Command) (*userDomain.User, error)
 }

@@ -15,7 +15,7 @@ type Interactor struct {
 	repoUser   user.UserRepository
 }
 
-func NewInteractor(passHasher user.PasswordHasher, idGen user.IdentifierGenerator, repoUser user.UserRepository) *Interactor {
+func NewInteractor(passHasher user.PasswordHasher, idGen user.IdentifierGenerator, repoUser user.UserRepository) RegisterUseCase {
 	return &Interactor{
 		passHasher: passHasher,
 		idGen:      idGen,
@@ -23,7 +23,7 @@ func NewInteractor(passHasher user.PasswordHasher, idGen user.IdentifierGenerato
 	}
 }
 
-func (i *Interactor) Execute(ctx context.Context, cmd Command) (*user.User, error) {
+func (i *Interactor) Register(ctx context.Context, cmd Command) (*user.User, error) {
 	name, err := vo.NewName(cmd.Name)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (i *Interactor) Execute(ctx context.Context, cmd Command) (*user.User, erro
 		if errors.Is(err, user.ErrEmailAlreadyExists) {
 			return nil, err
 		}
-		return nil, fmt.Errorf("usecase.auth.register.Execute: %w", err)
+		return nil, fmt.Errorf("usecase.auth.register.Register: %w", err)
 	}
 
 	return userSave, nil

@@ -7,5 +7,5 @@ import (
 )
 
 type RegisterUseCase interface {
-	Execute(ctx context.Context, cmd Command) (*user.User, error)
+	Register(ctx context.Context, cmd Command) (*user.User, error)
 }

@@ -32,7 +32,7 @@ func (h *LoginHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Execute use case
-	result, err := h.uc.Execute(r.Context(), login.Command{
+	result, err := h.uc.Login(r.Context(), login.Command{
 		Email:    req.Email,
 		Password: req.Password,
 	})

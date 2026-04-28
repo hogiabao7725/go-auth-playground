@@ -13,14 +13,14 @@ type Interactor struct {
 	repoUser   userDomain.UserRepository
 }
 
-func NewInteractor(passHasher userDomain.PasswordHasher, repoUser userDomain.UserRepository) *Interactor {
+func NewInteractor(passHasher userDomain.PasswordHasher, repoUser userDomain.UserRepository) LoginUseCase {
 	return &Interactor{
 		passHasher: passHasher,
 		repoUser:   repoUser,
 	}
 }
 
-func (i *Interactor) Execute(ctx context.Context, cmd Command) (*userDomain.User, error) {
+func (i *Interactor) Login(ctx context.Context, cmd Command) (*userDomain.User, error) {
 	email, err := vo.NewEmail(cmd.Email)
 	if err != nil {
 		return nil, err

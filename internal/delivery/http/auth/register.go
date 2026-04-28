@@ -32,7 +32,7 @@ func (h *RegisterHandler) HandleRegister(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Execute use case
-	result, err := h.uc.Execute(r.Context(), registerUC.Command{
+	result, err := h.uc.Register(r.Context(), registerUC.Command{
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: req.Password,
