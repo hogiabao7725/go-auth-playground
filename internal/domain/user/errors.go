@@ -12,6 +12,12 @@ var (
 
 	// Email
 	ErrEmailAlreadyExists = errors.New("this email is already registered")
+
+	// User
+	ErrUserNotFound = errors.New("user not found")
+
+	// Authentication
+	ErrInvalidCredentials = errors.New("invalid email or password")
 )
 
 // Validation errors (Aliased from VO)
