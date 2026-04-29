@@ -10,10 +10,6 @@ import (
 
 var _ user.PasswordHasher = (*Bcrypt)(nil)
 
-var (
-	ErrMismatched = errors.New("password does not match")
-)
-
 type Bcrypt struct{}
 
 func NewBcrypt() *Bcrypt {
@@ -32,7 +28,7 @@ func (Bcrypt) Compare(hashed, plain string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return ErrMismatched
+			return user.ErrInvalidCredentials
 		}
 		return fmt.Errorf("infrastructure.crypt.bcrypt.Compare: %w", err)
 	}

@@ -24,7 +24,9 @@ func MapDomainErrorToHTTP(err error) (int, string) {
 	case errors.Is(err, user.ErrUserNotFound):
 		return http.StatusNotFound, err.Error()
 
-	case errors.Is(err, user.ErrInvalidCredentials):
+	case errors.Is(err, user.ErrInvalidCredentials),
+		errors.Is(err, user.ErrTokenInvalid),
+		errors.Is(err, user.ErrTokenExpired):
 		return http.StatusUnauthorized, err.Error()
 
 	default:
