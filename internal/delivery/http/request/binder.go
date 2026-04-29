@@ -45,8 +45,6 @@ func init() {
 }
 
 func BindJSON(r *http.Request, req any) error {
-	defer r.Body.Close()
-
 	// Decode JSON
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields() // Disallow unknown fields to prevent silent errors
