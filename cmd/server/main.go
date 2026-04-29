@@ -16,6 +16,7 @@ import (
 	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/logger"
 	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/persistence"
 	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/persistence/sqlc"
+	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/token"
 	"github.com/hogiabao7725/go-auth-playground/internal/usecase/auth/login"
 	registerUC "github.com/hogiabao7725/go-auth-playground/internal/usecase/auth/register"
 )
@@ -62,6 +63,7 @@ func main() {
 	// infrastructure
 	bcrypt := crypt.NewBcrypt()
 	idGen := identifier.NewUUID()
+	jwtProvider := token.NewJWT(cfg.JWT.AccessSecret, cfg.JWT.RefreshSecret, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL)
 
 	// repositories
 	queries := sqlc.New(dbpool)
@@ -69,7 +71,7 @@ func main() {
 
 	// use case
 	registerUC := registerUC.NewInteractor(bcrypt, idGen, userRepo)
-	loginUC := login.NewInteractor(bcrypt, userRepo)
+	loginUC := login.NewInteractor(bcrypt, userRepo, jwtProvider)
 
 	// handlers
 	registerHandler := auth.NewRegisterHandler(registerUC)

@@ -25,13 +25,15 @@ type LoginRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
-type LoginResponse struct {
-	User UserInfo `json:"user"`
-}
-
-type UserInfo struct {
+type userInfo struct {
 	ID    string `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
 	Role  string `json:"role"`
+}
+
+type LoginResponse struct {
+	AccessToken string   `json:"access_token"`
+	ExpiresIn   int64    `json:"expires_in"`
+	User        userInfo `json:"user"`
 }

@@ -3,24 +3,33 @@ package login
 import (
 	"context"
 	"errors"
+	"time"
 
 	userDomain "github.com/hogiabao7725/go-auth-playground/internal/domain/user"
 	"github.com/hogiabao7725/go-auth-playground/internal/domain/user/vo"
 )
 
-type Interactor struct {
-	passHasher userDomain.PasswordHasher
-	repoUser   userDomain.UserRepository
+type Result struct {
+	AccessToken string
+	ExpiresIn   time.Time
+	User        *userDomain.User
 }
 
-func NewInteractor(passHasher userDomain.PasswordHasher, repoUser userDomain.UserRepository) LoginUseCase {
+type Interactor struct {
+	passHasher    userDomain.PasswordHasher
+	repoUser      userDomain.UserRepository
+	tokenProvider userDomain.TokenProvider
+}
+
+func NewInteractor(passHasher userDomain.PasswordHasher, repoUser userDomain.UserRepository, tokenProvider userDomain.TokenProvider) LoginUseCase {
 	return &Interactor{
-		passHasher: passHasher,
-		repoUser:   repoUser,
+		passHasher:    passHasher,
+		repoUser:      repoUser,
+		tokenProvider: tokenProvider,
 	}
 }
 
-func (i *Interactor) Login(ctx context.Context, cmd Command) (*userDomain.User, error) {
+func (i *Interactor) Login(ctx context.Context, cmd Command) (*Result, error) {
 	email, err := vo.NewEmail(cmd.Email)
 	if err != nil {
 		return nil, err
@@ -41,8 +50,17 @@ func (i *Interactor) Login(ctx context.Context, cmd Command) (*userDomain.User, 
 
 	// compare password
 	if err := i.passHasher.Compare(user.PasswordHash(), pass.Value()); err != nil {
-		return nil, userDomain.ErrInvalidCredentials
+		return nil, err
 	}
 
-	return user, nil
+	accessToken, err := i.tokenProvider.GenerateAccessToken(user.ID(), user.Role().String())
+	if err != nil {
+		return nil, err
+	}
+
+	return &Result{
+		AccessToken: accessToken,
+		ExpiresIn:   time.Now().Add(i.tokenProvider.AccessTTL()),
+		User:        user,
+	}, nil
 }

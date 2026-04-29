@@ -43,11 +43,13 @@ func (h *LoginHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := LoginResponse{
-		User: UserInfo{
-			ID:    result.ID(),
-			Name:  result.Name().String(),
-			Email: result.Email().String(),
-			Role:  result.Role().String(),
+		AccessToken: result.AccessToken,
+		ExpiresIn:   result.ExpiresIn.Unix(),
+		User: userInfo{
+			ID:    result.User.ID(),
+			Name:  result.User.Name().String(),
+			Email: result.User.Email().String(),
+			Role:  result.User.Role().String(),
 		},
 	}
 	response.Success(w, http.StatusOK, "login successful", res)
