@@ -57,6 +57,17 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*user.U
 	return toDomainUser(&dbUser), nil
 }
 
+func (r *UserRepository) FindByID(ctx context.Context, id string) (*user.User, error) {
+	dbUser, err := r.queries.GetUserByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, user.ErrUserNotFound
+		}
+		return nil, fmt.Errorf("infrastructure.persistence.user_repo.FindByID: %w", err)
+	}
+	return toDomainUser(&dbUser), nil
+}
+
 func toDomainUser(dbUser *sqlc.User) *user.User {
 	name := vo.ReconstituteName(dbUser.Name)
 	email := vo.ReconstituteEmail(dbUser.Email)
