@@ -37,3 +37,12 @@ type LoginResponse struct {
 	ExpiresIn   int64    `json:"expires_in"`
 	User        userInfo `json:"user"`
 }
+
+// Profile DTOs
+
+type ProfileResponse struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
+}
