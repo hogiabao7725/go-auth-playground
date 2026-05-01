@@ -80,23 +80,23 @@ func main() {
 	authMW := middleware.NewAuthMiddleware(jwtProvider)
 	loggerMW := middleware.NewLoggerMiddleware(appLogger)
 
-	// 9. create stack functions (app-specific policy)
-	protected := WithAuth(authMW) // user bình thường
-	// adminOnly := WithRole(authMW, "admin") // admin
+	// 9. define policy functions
+	// 9. Define policy functions (app-specific, dùng Middleware type chuẩn)
+	public := func(h http.Handler) http.Handler { return h }
+	protected := authMW.RequireAuth()
 
 	// 10. setup router
 	mux := http.NewServeMux()
 
-	// ==================== PUBLIC ROUTES ====================
-	mux.Handle("POST /auth/register", Public(registerHandler.HandleRegister))
-	mux.Handle("POST /auth/login", Public(loginHandler.HandleLogin))
-	health.RegisterRoutes(mux) // GET /health
+	// 11. register routes with appropriate middleware
+	healthRoutes := health.NewHealthRoutes()
+	healthRoutes.RegisterRoutes(mux, public)
 
-	// ==================== PROTECTED ROUTES (User) ====================
-	mux.Handle("GET /auth/profile", protected(profileHandler.HandleProfile))
+	authRoutes := auth.NewAuthRoutes(registerHandler, loginHandler, profileHandler)
+	authRoutes.RegisterRoutes(mux, public, protected)
 
 	// ==================== GLOBAL MIDDLEWARE ====================
-	handler := loggerMW.Handler(mux)
+	handler := loggerMW.Handler()(mux)
 
 	// logger register route
 	appLogger.Info("registered routes")
