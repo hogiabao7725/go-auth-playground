@@ -10,17 +10,6 @@ import (
 	"github.com/hogiabao7725/go-auth-playground/internal/domain/user"
 )
 
-type contextKey string
-
-const (
-	UserIDKey contextKey = "auth_user_id"
-	RoleKey   contextKey = "auth_role"
-
-	// Header constants
-	authHeaderKey    = "Authorization"
-	authHeaderPrefix = "Bearer"
-)
-
 type AuthMiddleware struct {
 	tokenProvider user.TokenProvider
 }
@@ -29,39 +18,41 @@ func NewAuthMiddleware(tokenProvider user.TokenProvider) *AuthMiddleware {
 	return &AuthMiddleware{tokenProvider: tokenProvider}
 }
 
-func (am *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 1. Extract Authorization header
-		authHeader := r.Header.Get(authHeaderKey)
-		if authHeader == "" {
-			response.Error(w, http.StatusUnauthorized, "authorization header is required", nil)
-			return
-		}
-
-		// 2. validate format: "Bearer <token>"
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || !strings.EqualFold(parts[0], authHeaderPrefix) {
-			response.Error(w, http.StatusUnauthorized, "authorization header format must be Bearer {token}", nil)
-			return
-		}
-
-		// 3. Parse token
-		claims, err := am.tokenProvider.ParseAccessToken(parts[1])
-		if err != nil {
-			if errors.Is(err, user.ErrTokenExpired) {
-				response.Error(w, http.StatusUnauthorized, "token expired", nil)
+func (am *AuthMiddleware) RequireAuth() Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// 1. Extract Authorization header
+			authHeader := r.Header.Get(authHeaderKey)
+			if authHeader == "" {
+				response.Error(w, http.StatusUnauthorized, "authorization header is required", nil)
 				return
 			}
-			response.Error(w, http.StatusUnauthorized, "invalid or expired token", nil)
-			return
-		}
 
-		// 4. Store user info in context
-		ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
-		ctx = context.WithValue(ctx, RoleKey, claims.Role)
+			// 2. validate format: "Bearer <token>"
+			parts := strings.SplitN(authHeader, " ", 2)
+			if len(parts) != 2 || !strings.EqualFold(parts[0], authHeaderPrefix) {
+				response.Error(w, http.StatusUnauthorized, "authorization header format must be Bearer {token}", nil)
+				return
+			}
 
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+			// 3. Parse token
+			claims, err := am.tokenProvider.ParseAccessToken(parts[1])
+			if err != nil {
+				if errors.Is(err, user.ErrTokenExpired) {
+					response.Error(w, http.StatusUnauthorized, "token expired", nil)
+					return
+				}
+				response.Error(w, http.StatusUnauthorized, "invalid or expired token", nil)
+				return
+			}
+
+			// 4. Store user info in context
+			ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
+			ctx = context.WithValue(ctx, RoleKey, claims.Role)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
 }
 
 func GetUserID(ctx context.Context) string {
@@ -86,7 +77,7 @@ func GetRole(ctx context.Context) string {
 	return val
 }
 
-func RequireRole(allowedRoles ...string) func(http.Handler) http.Handler {
+func RequireRole(allowedRoles ...string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			role := GetRole(r.Context())

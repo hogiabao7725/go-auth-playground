@@ -14,32 +14,34 @@ func NewLoggerMiddleware(logger *slog.Logger) *LoggerMiddleware {
 	return &LoggerMiddleware{logger: logger}
 }
 
-func (lm *LoggerMiddleware) Handler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
+func (lm *LoggerMiddleware) Handler() Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			start := time.Now()
 
-		// Wrap the ResponseWriter to capture the status code
-		rec := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
+			// Wrap the ResponseWriter to capture the status code
+			rec := &statusRecorder{ResponseWriter: w, statusCode: http.StatusOK}
 
-		next.ServeHTTP(rec, r)
+			next.ServeHTTP(rec, r)
 
-		duration := time.Since(start)
+			duration := time.Since(start)
 
-		level := levelFromStatusCode(rec.statusCode)
+			level := levelFromStatusCode(rec.statusCode)
 
-		lm.logger.LogAttrs(
-			r.Context(),
-			level,
-			"request completed",
-			slog.String("method", r.Method),
-			slog.String("path", r.URL.Path),
-			slog.String("query", r.URL.RawQuery),
-			slog.Int("status", rec.statusCode),
-			slog.Duration("duration", duration),
-			slog.String("remote_addr", r.RemoteAddr),
-			slog.String("user_agent", r.UserAgent()),
-		)
-	})
+			lm.logger.LogAttrs(
+				r.Context(),
+				level,
+				"request completed",
+				slog.String("method", r.Method),
+				slog.String("path", r.URL.Path),
+				slog.String("query", r.URL.RawQuery),
+				slog.Int("status", rec.statusCode),
+				slog.Duration("duration", duration),
+				slog.String("remote_addr", r.RemoteAddr),
+				slog.String("user_agent", r.UserAgent()),
+			)
+		})
+	}
 }
 
 // levelFromStatusCode maps HTTP status codes to slog levels for logging.
