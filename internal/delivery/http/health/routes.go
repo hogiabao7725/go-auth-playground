@@ -1,18 +1,22 @@
 package health
 
 import (
-	"encoding/json"
 	"net/http"
+
+	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/middleware"
+	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/response"
 )
 
-func RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /health", healthCheckHandler)
+type HealthRoutes struct{}
+
+func NewHealthRoutes() *HealthRoutes {
+	return &HealthRoutes{}
 }
 
-func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
-		"status": "ok",
-	})
+func (hr *HealthRoutes) RegisterRoutes(mux *http.ServeMux, public middleware.Middleware) {
+	mux.Handle("GET /health", public(http.HandlerFunc(hr.healthCheckHandler)))
+}
+
+func (hr *HealthRoutes) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	response.Success(w, http.StatusOK, "OK", nil)
 }
