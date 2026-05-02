@@ -43,8 +43,9 @@ func (h *LoginHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := LoginResponse{
-		AccessToken: result.AccessToken,
-		ExpiresIn:   result.ExpiresIn.Unix(),
+		AccessToken:  result.AccessToken,
+		ExpiresIn:    result.ExpiresIn.Unix(),
+		RefreshToken: result.RefreshToken,
 		User: userInfo{
 			ID:    result.User.ID(),
 			Name:  result.User.Name().String(),
