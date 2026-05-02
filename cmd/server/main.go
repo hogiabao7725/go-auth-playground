@@ -19,6 +19,7 @@ import (
 	"github.com/hogiabao7725/go-auth-playground/internal/infrastructure/token"
 	"github.com/hogiabao7725/go-auth-playground/internal/usecase/auth/login"
 	"github.com/hogiabao7725/go-auth-playground/internal/usecase/auth/profile"
+	"github.com/hogiabao7725/go-auth-playground/internal/usecase/auth/refresh"
 	registerUC "github.com/hogiabao7725/go-auth-playground/internal/usecase/auth/register"
 )
 
@@ -72,11 +73,13 @@ func main() {
 	registerUC := registerUC.NewInteractor(bcrypt, idGen, userRepo)
 	loginUC := login.NewInteractor(bcrypt, userRepo, jwtProvider, tokenHasher, idGen, refreshRepo)
 	profileUC := profile.NewInteractor(userRepo)
+	refreshUC := refresh.NewInteractor(idGen, jwtProvider, tokenHasher, refreshRepo)
 
 	// 7. initialize handlers
 	registerHandler := auth.NewRegisterHandler(registerUC)
 	loginHandler := auth.NewLoginHandler(loginUC)
 	profileHandler := auth.NewProfileHandler(profileUC)
+	refreshHandler := auth.NewRefreshHandler(refreshUC)
 
 	// 8. initialize middleware
 	authMW := middleware.NewAuthMiddleware(jwtProvider)
@@ -94,7 +97,7 @@ func main() {
 	healthRoutes := health.NewHealthRoutes()
 	healthRoutes.RegisterRoutes(mux, public)
 
-	authRoutes := auth.NewAuthRoutes(registerHandler, loginHandler, profileHandler)
+	authRoutes := auth.NewAuthRoutes(registerHandler, loginHandler, profileHandler, refreshHandler)
 	authRoutes.RegisterRoutes(mux, public, protected)
 
 	// ==================== GLOBAL MIDDLEWARE ====================
@@ -106,6 +109,7 @@ func main() {
 	appLogger.Info("route", slog.String("method", "GET"), slog.String("pattern", "/auth/profile"))
 	appLogger.Info("route", slog.String("method", "POST"), slog.String("pattern", "/auth/register"))
 	appLogger.Info("route", slog.String("method", "POST"), slog.String("pattern", "/auth/login"))
+	appLogger.Info("route", slog.String("method", "POST"), slog.String("pattern", "/auth/refresh"))
 
 	// 11. start server
 	server := &http.Server{

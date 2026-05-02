@@ -2,8 +2,6 @@ package register
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/hogiabao7725/go-auth-playground/internal/domain/user"
 	"github.com/hogiabao7725/go-auth-playground/internal/domain/user/vo"
@@ -53,10 +51,7 @@ func (i *Interactor) Register(ctx context.Context, cmd Command) (*user.User, err
 	}
 
 	if err := i.repoUser.Save(ctx, userSave); err != nil {
-		if errors.Is(err, user.ErrEmailAlreadyExists) {
-			return nil, err
-		}
-		return nil, fmt.Errorf("usecase.auth.register.Register: %w", err)
+		return nil, err
 	}
 
 	return userSave, nil
