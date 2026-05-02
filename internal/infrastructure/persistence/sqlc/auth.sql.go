@@ -12,13 +12,14 @@ import (
 
 const createRefreshToken = `-- name: CreateRefreshToken :exec
 
-INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at, created_at)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO refresh_tokens (id, user_id, role, token_hash, expires_at, created_at)
+VALUES ($1, $2, $3, $4, $5, $6)
 `
 
 type CreateRefreshTokenParams struct {
 	ID        string    `json:"id"`
 	UserID    string    `json:"user_id"`
+	Role      string    `json:"role"`
 	TokenHash string    `json:"token_hash"`
 	ExpiresAt time.Time `json:"expires_at"`
 	CreatedAt time.Time `json:"created_at"`
@@ -29,6 +30,7 @@ func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshToken
 	_, err := q.db.Exec(ctx, createRefreshToken,
 		arg.ID,
 		arg.UserID,
+		arg.Role,
 		arg.TokenHash,
 		arg.ExpiresAt,
 		arg.CreatedAt,
@@ -57,17 +59,27 @@ func (q *Queries) DeleteRefreshTokensByUserID(ctx context.Context, userID string
 }
 
 const getRefreshTokenByHash = `-- name: GetRefreshTokenByHash :one
-SELECT id, user_id, token_hash, expires_at, created_at
+SELECT id, user_id, role, token_hash, expires_at, created_at
 FROM refresh_tokens
 WHERE token_hash = $1
 `
 
-func (q *Queries) GetRefreshTokenByHash(ctx context.Context, tokenHash string) (RefreshToken, error) {
+type GetRefreshTokenByHashRow struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"user_id"`
+	Role      string    `json:"role"`
+	TokenHash string    `json:"token_hash"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (q *Queries) GetRefreshTokenByHash(ctx context.Context, tokenHash string) (GetRefreshTokenByHashRow, error) {
 	row := q.db.QueryRow(ctx, getRefreshTokenByHash, tokenHash)
-	var i RefreshToken
+	var i GetRefreshTokenByHashRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
+		&i.Role,
 		&i.TokenHash,
 		&i.ExpiresAt,
 		&i.CreatedAt,

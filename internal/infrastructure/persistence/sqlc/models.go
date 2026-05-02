@@ -59,6 +59,7 @@ type RefreshToken struct {
 	TokenHash string    `json:"token_hash"`
 	ExpiresAt time.Time `json:"expires_at"`
 	CreatedAt time.Time `json:"created_at"`
+	Role      string    `json:"role"`
 }
 
 type User struct {
