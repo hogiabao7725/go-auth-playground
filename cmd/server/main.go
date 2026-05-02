@@ -61,14 +61,16 @@ func main() {
 	bcrypt := crypt.NewBcrypt()
 	idGen := identifier.NewUUID()
 	jwtProvider := token.NewJWT(cfg.JWT.AccessSecret, cfg.JWT.RefreshSecret, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL)
+	tokenHasher := crypt.NewSHA256()
 
 	// 5. initialize repositories
 	queries := sqlc.New(dbpool)
 	userRepo := persistence.NewUserRepository(queries)
+	refreshRepo := persistence.NewRefreshTokenRepository(queries)
 
 	// 6. initialize use cases
 	registerUC := registerUC.NewInteractor(bcrypt, idGen, userRepo)
-	loginUC := login.NewInteractor(bcrypt, userRepo, jwtProvider)
+	loginUC := login.NewInteractor(bcrypt, userRepo, jwtProvider, tokenHasher, idGen, refreshRepo)
 	profileUC := profile.NewInteractor(userRepo)
 
 	// 7. initialize handlers
