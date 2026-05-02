@@ -12,15 +12,18 @@ type IdentifierGenerator interface {
 }
 
 type TokenProvider interface {
+	// Access Token (JWT)
 	GenerateAccessToken(userID, role string) (string, error)
-	GenerateRefreshToken(userID string) (string, error)
-
 	ParseAccessToken(token string) (*AccessTokenData, error)
-	ParseRefreshToken(token string) (*RefreshTokenData, error)
-
 	ValidateAccessToken(token string) bool
-	ValidateRefreshToken(token string) bool
-
 	AccessTTL() time.Duration
+
+	// Refresh Token (Opaque)
+	GenerateRefreshTokenRaw() string
 	RefreshTTL() time.Duration
+}
+
+type TokenHasher interface {
+	Hash(plainToken string) string
+	Compare(hashedToken, plainToken string) error
 }

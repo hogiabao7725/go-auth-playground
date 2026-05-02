@@ -8,9 +8,3 @@ type AccessTokenData struct {
 	ExpiresAt time.Time
 	TokenID   string
 }
-
-type RefreshTokenData struct {
-	UserID    string
-	ExpiresAt time.Time
-	TokenID   string
-}

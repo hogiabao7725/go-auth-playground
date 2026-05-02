@@ -18,10 +18,6 @@ type accessClaims struct {
 	Role string `json:"role"`
 }
 
-type refreshClaims struct {
-	jwt.RegisteredClaims
-}
-
 // Technical errors
 var (
 	errEmptySecret = errors.New("secret cannot be empty")
@@ -46,6 +42,8 @@ func NewJWT(accessSecret, refreshSecret string, accessTTL, refreshTTL time.Durat
 	}
 }
 
+// ==== Access Token (JWT) ====
+
 func (j *JWT) GenerateAccessToken(userID, role string) (string, error) {
 	if err := validateTokenInput(userID, j.accessSecret, j.accessTTL); err != nil {
 		return "", err
@@ -64,25 +62,6 @@ func (j *JWT) GenerateAccessToken(userID, role string) (string, error) {
 
 	token := jwt.NewWithClaims(j.signingMethod, claims)
 	return token.SignedString([]byte(j.accessSecret))
-}
-
-func (j *JWT) GenerateRefreshToken(userID string) (string, error) {
-	if err := validateTokenInput(userID, j.refreshSecret, j.refreshTTL); err != nil {
-		return "", err
-	}
-
-	now := time.Now()
-	claims := refreshClaims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        uuid.New().String(),
-			Subject:   userID,
-			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(j.refreshTTL)),
-		},
-	}
-
-	token := jwt.NewWithClaims(j.signingMethod, claims)
-	return token.SignedString([]byte(j.refreshSecret))
 }
 
 func (j *JWT) ParseAccessToken(tokenString string) (*user.AccessTokenData, error) {
@@ -109,41 +88,19 @@ func (j *JWT) ParseAccessToken(tokenString string) (*user.AccessTokenData, error
 	}, nil
 }
 
-func (j *JWT) ParseRefreshToken(tokenString string) (*user.RefreshTokenData, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &refreshClaims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("infrastructure.token.jwt.ParseRefreshToken: unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(j.refreshSecret), nil
-	})
-	if err != nil {
-		return nil, mapJWTError(err)
-	}
-
-	claims, ok := token.Claims.(*refreshClaims)
-	if !ok || !token.Valid {
-		return nil, user.ErrTokenInvalid
-	}
-
-	return &user.RefreshTokenData{
-		UserID:    claims.Subject,
-		ExpiresAt: claims.ExpiresAt.Time,
-		TokenID:   claims.ID,
-	}, nil
-}
-
 func (j *JWT) ValidateAccessToken(tokenString string) bool {
 	_, err := j.ParseAccessToken(tokenString)
 	return err == nil
 }
 
-func (j *JWT) ValidateRefreshToken(tokenString string) bool {
-	_, err := j.ParseRefreshToken(tokenString)
-	return err == nil
-}
-
 func (j *JWT) AccessTTL() time.Duration {
 	return j.accessTTL
+}
+
+// ==== Refresh Token (Opaque) ====
+
+func (j *JWT) GenerateRefreshTokenRaw() string {
+	return uuid.New().String()
 }
 
 func (j *JWT) RefreshTTL() time.Duration {
