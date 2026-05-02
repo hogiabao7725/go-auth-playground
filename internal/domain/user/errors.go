@@ -20,8 +20,9 @@ var (
 	ErrInvalidCredentials = errors.New("invalid email or password")
 
 	// Token
-	ErrTokenInvalid = errors.New("token is invalid or unauthorized")
-	ErrTokenExpired = errors.New("session expired, please login again")
+	ErrTokenInvalid         = errors.New("token is invalid or unauthorized")
+	ErrTokenExpired         = errors.New("session expired, please login again")
+	ErrRefreshTokenNotFound = errors.New("refresh token not found")
 )
 
 // Validation errors (Aliased from VO)

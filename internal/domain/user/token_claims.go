@@ -16,6 +16,7 @@ type AccessTokenData struct {
 type RefreshTokenRecord struct {
 	ID        string
 	UserID    string
+	Role      string
 	TokenHash string
 	ExpiresAt time.Time
 	CreatedAt time.Time

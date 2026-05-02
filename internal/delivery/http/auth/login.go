@@ -42,9 +42,13 @@ func (h *LoginHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set refresh token cookie
+	setRefreshCookie(w, result.RefreshToken, result.RefreshTTL)
+
+	// Send response
 	res := LoginResponse{
 		AccessToken:  result.AccessToken,
-		ExpiresIn:    result.ExpiresIn.Unix(),
+		ExpiresIn:    result.ExpiresIn,
 		RefreshToken: result.RefreshToken,
 		User: userInfo{
 			ID:    result.User.ID(),

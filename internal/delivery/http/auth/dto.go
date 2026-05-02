@@ -47,3 +47,11 @@ type ProfileResponse struct {
 	Email string `json:"email"`
 	Role  string `json:"role"`
 }
+
+// Refresh Token DTOs
+
+type RefreshTokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	ExpiresIn    int64  `json:"expires_in"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+}

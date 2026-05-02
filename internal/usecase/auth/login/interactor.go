@@ -11,8 +11,9 @@ import (
 
 type Result struct {
 	AccessToken  string
-	ExpiresIn    time.Time
+	ExpiresIn    int64
 	RefreshToken string
+	RefreshTTL   time.Duration
 	User         *userDomain.User
 }
 
@@ -77,6 +78,7 @@ func (i *Interactor) Login(ctx context.Context, cmd Command) (*Result, error) {
 	refreshTokenData := userDomain.RefreshTokenRecord{
 		ID:        i.idGen.Generate(),
 		UserID:    user.ID(),
+		Role:      user.Role().String(),
 		TokenHash: i.tokenHasher.Hash(rawRefreshToken),
 		ExpiresAt: time.Now().Add(i.tokenProvider.RefreshTTL()),
 		CreatedAt: time.Now(),
@@ -88,8 +90,9 @@ func (i *Interactor) Login(ctx context.Context, cmd Command) (*Result, error) {
 
 	return &Result{
 		AccessToken:  accessToken,
-		ExpiresIn:    time.Now().Add(i.tokenProvider.AccessTTL()),
+		ExpiresIn:    int64(i.tokenProvider.AccessTTL().Seconds()),
 		RefreshToken: rawRefreshToken,
+		RefreshTTL:   i.tokenProvider.RefreshTTL(),
 		User:         user,
 	}, nil
 }
