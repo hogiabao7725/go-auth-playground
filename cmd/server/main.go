@@ -76,10 +76,10 @@ func main() {
 	refreshUC := refresh.NewInteractor(idGen, jwtProvider, tokenHasher, refreshRepo)
 
 	// 7. initialize handlers
-	registerHandler := auth.NewRegisterHandler(registerUC)
-	loginHandler := auth.NewLoginHandler(loginUC)
-	profileHandler := auth.NewProfileHandler(profileUC)
-	refreshHandler := auth.NewRefreshHandler(refreshUC)
+	registerHandler := auth.NewRegisterHandler(registerUC, appLogger)
+	loginHandler := auth.NewLoginHandler(loginUC, appLogger)
+	profileHandler := auth.NewProfileHandler(profileUC, appLogger)
+	refreshHandler := auth.NewRefreshHandler(refreshUC, appLogger)
 
 	// 8. initialize middleware
 	authMW := middleware.NewAuthMiddleware(jwtProvider)
