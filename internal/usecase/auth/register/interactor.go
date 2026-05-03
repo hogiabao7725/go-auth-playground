@@ -2,6 +2,7 @@ package register
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hogiabao7725/go-auth-playground/internal/domain/user"
 	"github.com/hogiabao7725/go-auth-playground/internal/domain/user/vo"
@@ -39,7 +40,7 @@ func (i *Interactor) Register(ctx context.Context, cmd Command) (*user.User, err
 
 	hashStr, err := i.passHasher.Hash(plainPass.Value())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("usecase.register.Interactor.Register.HashPassword: %w", err)
 	}
 	hashedPass := vo.NewHashedPassword(hashStr)
 
@@ -51,7 +52,7 @@ func (i *Interactor) Register(ctx context.Context, cmd Command) (*user.User, err
 	}
 
 	if err := i.repoUser.Save(ctx, userSave); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("usecase.register.Interactor.Register.SaveUser: %w", err)
 	}
 
 	return userSave, nil

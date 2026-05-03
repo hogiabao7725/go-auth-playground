@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/middleware"
@@ -9,11 +10,12 @@ import (
 )
 
 type ProfileHandler struct {
-	uc profileUC.ProfileUseCase
+	uc     profileUC.ProfileUseCase
+	logger *slog.Logger
 }
 
-func NewProfileHandler(uc profileUC.ProfileUseCase) *ProfileHandler {
-	return &ProfileHandler{uc: uc}
+func NewProfileHandler(uc profileUC.ProfileUseCase, logger *slog.Logger) *ProfileHandler {
+	return &ProfileHandler{uc: uc, logger: logger}
 }
 
 func (h *ProfileHandler) HandleProfile(w http.ResponseWriter, r *http.Request) {
@@ -26,8 +28,7 @@ func (h *ProfileHandler) HandleProfile(w http.ResponseWriter, r *http.Request) {
 	cmd := profileUC.Command{UserID: userID}
 	profileInfo, err := h.uc.GetProfile(r.Context(), cmd)
 	if err != nil {
-		status, msg := response.MapDomainErrorToHTTP(err)
-		response.Error(w, status, msg, nil)
+		response.HandleError(w, r, h.logger, err)
 		return
 	}
 

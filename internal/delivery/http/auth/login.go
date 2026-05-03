@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/request"
@@ -10,11 +11,12 @@ import (
 )
 
 type LoginHandler struct {
-	uc login.LoginUseCase
+	uc     login.LoginUseCase
+	logger *slog.Logger
 }
 
-func NewLoginHandler(uc login.LoginUseCase) *LoginHandler {
-	return &LoginHandler{uc: uc}
+func NewLoginHandler(uc login.LoginUseCase, logger *slog.Logger) *LoginHandler {
+	return &LoginHandler{uc: uc, logger: logger}
 }
 
 func (h *LoginHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
@@ -37,8 +39,7 @@ func (h *LoginHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		Password: req.Password,
 	})
 	if err != nil {
-		statusCode, msg := response.MapDomainErrorToHTTP(err)
-		response.Error(w, statusCode, msg, nil)
+		response.HandleError(w, r, h.logger, err)
 		return
 	}
 

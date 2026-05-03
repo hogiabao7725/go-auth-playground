@@ -3,6 +3,7 @@ package login
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	userDomain "github.com/hogiabao7725/go-auth-playground/internal/domain/user"
@@ -59,18 +60,21 @@ func (i *Interactor) Login(ctx context.Context, cmd Command) (*Result, error) {
 		if errors.Is(err, userDomain.ErrUserNotFound) {
 			return nil, userDomain.ErrInvalidCredentials
 		}
-		return nil, err
+		return nil, fmt.Errorf("usecase.login.Interactor.Login.FindByEmail: %w", err)
 	}
 
 	// compare password
 	if err := i.passHasher.Compare(user.PasswordHash(), pass.Value()); err != nil {
-		return nil, err
+		if errors.Is(err, userDomain.ErrInvalidCredentials) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("usecase.login.Interactor.Login.ComparePassword: %w", err)
 	}
 
 	// Generate access token (JWT)
 	accessToken, err := i.tokenProvider.GenerateAccessToken(user.ID(), user.Role().String())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("usecase.login.Interactor.Login.GenerateAccessToken: %w", err)
 	}
 
 	// Generate and save refresh token
@@ -85,7 +89,7 @@ func (i *Interactor) Login(ctx context.Context, cmd Command) (*Result, error) {
 	}
 
 	if err := i.refreshRepository.Save(ctx, &refreshTokenData); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("usecase.login.Interactor.Login.SaveRefreshToken: %w", err)
 	}
 
 	return &Result{

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"github.com/hogiabao7725/go-auth-playground/internal/delivery/http/request"
@@ -10,11 +11,12 @@ import (
 )
 
 type RegisterHandler struct {
-	uc registerUC.RegisterUseCase
+	uc     registerUC.RegisterUseCase
+	logger *slog.Logger
 }
 
-func NewRegisterHandler(uc registerUC.RegisterUseCase) *RegisterHandler {
-	return &RegisterHandler{uc: uc}
+func NewRegisterHandler(uc registerUC.RegisterUseCase, logger *slog.Logger) *RegisterHandler {
+	return &RegisterHandler{uc: uc, logger: logger}
 }
 
 func (h *RegisterHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
@@ -38,8 +40,7 @@ func (h *RegisterHandler) HandleRegister(w http.ResponseWriter, r *http.Request)
 		Password: req.Password,
 	})
 	if err != nil {
-		statusCode, msg := response.MapDomainErrorToHTTP(err)
-		response.Error(w, statusCode, msg, nil)
+		response.HandleError(w, r, h.logger, err)
 		return
 	}
 
