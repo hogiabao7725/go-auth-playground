@@ -1,6 +1,6 @@
-# echo-auth-playground
+# go-auth-playground
 
-`echo-auth-playground` is a compact authentication service written in Go.
+`go-auth-playground` is a compact authentication service written in Go.
 It is designed as a learning and experimentation project for clean architecture, token-based authentication, and SQL-first persistence.
 
 The project uses:
@@ -89,7 +89,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=postgres
-DB_NAME=echo_auth
+DB_NAME=go_auth
 DB_SSLMODE=disable
 
 DB_MAX_CONNS=25
