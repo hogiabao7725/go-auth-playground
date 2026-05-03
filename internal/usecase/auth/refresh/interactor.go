@@ -2,6 +2,8 @@ package refresh
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/hogiabao7725/go-auth-playground/internal/domain/user"
@@ -37,7 +39,10 @@ func (i *Interactor) Refresh(ctx context.Context, cmd Command) (*Result, error) 
 	// 2. Find the refresh token record by hash
 	record, err := i.refreshRepo.FindByHash(ctx, hashStr)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, user.ErrRefreshTokenNotFound) {
+			return nil, err
+		}
+		return nil, fmt.Errorf("usecase.refresh.Interactor.Refresh.FindByHash: %w", err)
 	}
 
 	// 3. Check expired
@@ -48,12 +53,12 @@ func (i *Interactor) Refresh(ctx context.Context, cmd Command) (*Result, error) 
 
 	// 4. Rotation
 	if err := i.refreshRepo.DeleteByHash(ctx, hashStr); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("usecase.refresh.Interactor.Refresh.DeleteRefreshToken: %w", err)
 	}
 
 	accessToken, err := i.tokenProvider.GenerateAccessToken(record.UserID, record.Role)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("usecase.refresh.Interactor.Refresh.GenerateAccessToken: %w", err)
 	}
 
 	// 5. Generate new refresh token
@@ -61,12 +66,13 @@ func (i *Interactor) Refresh(ctx context.Context, cmd Command) (*Result, error) 
 	newRecord := user.RefreshTokenRecord{
 		ID:        i.idGen.Generate(),
 		UserID:    record.UserID,
+		Role:      record.Role,
 		TokenHash: i.tokenHasher.Hash(rawRefreshToken),
 		ExpiresAt: time.Now().Add(i.tokenProvider.RefreshTTL()),
 		CreatedAt: time.Now(),
 	}
 	if err := i.refreshRepo.Save(ctx, &newRecord); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("usecase.refresh.Interactor.Refresh.SaveRefreshToken: %w", err)
 	}
 
 	return &Result{

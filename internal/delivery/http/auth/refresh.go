@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -9,11 +10,12 @@ import (
 )
 
 type RefreshHandler struct {
-	uc refresh.RefreshUseCase
+	uc     refresh.RefreshUseCase
+	logger *slog.Logger
 }
 
-func NewRefreshHandler(uc refresh.RefreshUseCase) *RefreshHandler {
-	return &RefreshHandler{uc: uc}
+func NewRefreshHandler(uc refresh.RefreshUseCase, logger *slog.Logger) *RefreshHandler {
+	return &RefreshHandler{uc: uc, logger: logger}
 }
 
 func (h *RefreshHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
@@ -28,8 +30,7 @@ func (h *RefreshHandler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		clearRefreshCookie(w)
 
-		status, msg := response.MapDomainErrorToHTTP(err)
-		response.Error(w, status, msg, nil)
+		response.HandleError(w, r, h.logger, err)
 		return
 	}
 
